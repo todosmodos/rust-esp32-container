@@ -1,4 +1,11 @@
 FROM debian
+RUN cat >/etc/apt/apt.conf.d/99norecommend<< __
+APT::Install-Recommends "0";
+APT::Install-Suggests "0";
+APT::Get::Install-Recommends "0";
+APT::Get::Install-Suggests "0";
+__
+
 RUN apt update -y && apt upgrade -y
 
 ## Various dependencies
