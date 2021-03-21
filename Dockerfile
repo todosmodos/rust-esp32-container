@@ -13,7 +13,7 @@ RUN apt install -y wget sudo cmake clang zlib1g make git llvm libssl-dev curl ca
 
 ## ESP-IDF dependencies
 ## https://docs.espressif.com/projects/esp-idf/en/latest/get-started/linux-setup.html
-RUN sudo apt install -y wget flex bison gperf ccache libffi-dev libssl-dev 
+RUN sudo apt install -y wget flex bison gperf ccache libffi-dev libssl-dev python3-pip
 
 ## Build LLVM
 ## based on these build instructions
