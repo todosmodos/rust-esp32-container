@@ -1,10 +1,10 @@
 FROM debian
-RUN cat >/etc/apt/apt.conf.d/99norecommend<< __
-APT::Install-Recommends "0";
-APT::Install-Suggests "0";
-APT::Get::Install-Recommends "0";
-APT::Get::Install-Suggests "0";
-__
+RUN  printf ' \n\
+APT::Install-Recommends "0"; \n\
+APT::Install-Suggests "0"; \n\
+APT::Get::Install-Recommends "0"; \n\
+APT::Get::Install-Suggests "0"; \
+'     >/etc/apt/apt.conf.d/99norecommend
 
 RUN apt update -y && apt upgrade -y
 
@@ -56,9 +56,9 @@ RUN $HOME/.cargo/bin/rustup run xtensa rustc --print target-list | grep xtensa
 ENV ESP32_IDF /xtensa-esp32-elf
 ENV ESP8266_IDF /xtensa-lx106-elf
 WORKDIR /
-RUN curl https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz \
+RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz \
     | tar --extract --gunzip
-RUN curl https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
+RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
     | tar --extract --gunzip
 # RUN pip install esptool
 	
