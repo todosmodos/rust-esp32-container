@@ -9,7 +9,7 @@ APT::Get::Install-Suggests "0"; \
 RUN apt update -y && apt upgrade -y
 
 ## Various dependencies
-RUN apt install -y wget sudo cmake clang zlib1g make git llvm libssl-dev curl
+RUN apt install -y wget sudo cmake clang zlib1g make git llvm libssl-dev curl ca-certificates
 
 ## ESP-IDF dependencies
 ## https://docs.espressif.com/projects/esp-idf/en/latest/get-started/linux-setup.html
