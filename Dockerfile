@@ -32,10 +32,8 @@ RUN cmake --build .
 
 ## Build Rust
 WORKDIR /
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup.sh && \
-	chmod +x ./rustup.sh && \
-	./rustup.sh  --default-toolchain nightly --profile default -y && \ 
-	rm rustup.sh
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | bash -s --  --default-toolchain nightly --profile default -y
 
 ## Build LLVM
 WORKDIR ${BUILD_ROOT}
@@ -60,7 +58,7 @@ RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1
     | tar --extract --gunzip
 RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
     | tar --extract --gunzip
-# RUN pip install esptool
+RUN pip3 install esptool
 	
 ## Setup Xargo
 RUN $HOME/.cargo/bin/cargo install xargo
