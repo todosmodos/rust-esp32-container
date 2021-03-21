@@ -73,7 +73,7 @@ ENV PATH ${ESP8266_IDF}/bin:${ESP32_IDF}/bin:/usr/local/bin:${HOME}/.cargo/bin:$
 
 ## test build sample project
 WORKDIR /
-RUN git clone https://github.com/mtnmts/xtensa-rust-quickstart
+RUN git clone https://github.com/mtnmts/xtensa-rust-quickstart --depth 1
 WORKDIR /xtensa-rust-quickstart
 RUN xargo build --release
 WORKDIR /
