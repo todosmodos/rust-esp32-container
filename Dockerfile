@@ -73,9 +73,9 @@ RUN $HOME/.cargo/bin/rustup run xtensa rustc --print target-list | grep xtensa
 ENV ESP32_IDF /xtensa-esp32-elf
 ENV ESP8266_IDF /xtensa-lx106-elf
 WORKDIR /
-RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz \
+RUN curl --fail --retry 5 https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz \
     | tar --extract --gunzip
-RUN curl --fail --retry=5 https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
+RUN curl --fail --retry 5 https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
     | tar --extract --gunzip
 RUN pip3 install esptool
 	
