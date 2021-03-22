@@ -28,7 +28,7 @@ RUN apt install -y  acl             gperf           pv \
 ## based on these build instructions
 ## http://quickhack.net/nom/blog/2019-05-14-build-rust-environment-for-esp32.html
 ENV BUILD_ROOT $(mktemp --directory)
-RUN git clone https://github.com/espressif/llvm-project.git --depth 1 ${BUILD_ROOT}/llvm-project
+RUN git clone --depth=1 https://github.com/espressif/llvm-project.git  ${BUILD_ROOT}/llvm-project
 ENV LLVM_BUILD ${BUILD_ROOT}/llvm_build
 RUN mkdir -p "${LLVM_BUILD}"
 WORKDIR ${LLVM_BUILD}
@@ -81,7 +81,8 @@ RUN pip3 install esptool
 	
 ## Setup Xargo
 RUN /usr/local/bin/cargo install xargo
-ENV XARGO_RUST_SRC ${BUILD_ROOT}/rust-xtensa/src
+RUN mv ${BUILD_ROOT}/rust-xtensa/src/* /usr/local/src
+ENV XARGO_RUST_SRC /usr/local/src
 ENV RUSTC /usr/local/bin/rustc
 
 ## Setup path
