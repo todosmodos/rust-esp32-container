@@ -30,7 +30,7 @@ ENV CXX clang++
 WORKDIR ${LLVM_BUILD}
 RUN git clone --depth=1 https://github.com/espressif/llvm-project.git  ${BUILD_ROOT}/llvm-project \
     &&  mkdir -p "${LLVM_BUILD}" \
-    &&  cmake ../llvm-project/llvm -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="Xtensa" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles"
+    &&  cmake ../llvm-project/llvm -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="Xtensa" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" \
     &&  cmake --build . 
 
 ## Build Rust
