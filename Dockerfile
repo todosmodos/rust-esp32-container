@@ -53,7 +53,7 @@ WORKDIR ${BUILD_ROOT}/rust-xtensa
 ENV RUST_BUILD ${BUILD_ROOT}/rust_build
 RUN mkdir -p ${RUST_BUILD}
 RUN ./configure --llvm-root="${LLVM_BUILD}" \
-                --enable-parallel-compiler
+                --enable-parallel-compiler \
                 --prefix="/usr/local" \ 
                 --disable-docs \
                 --disable-compiler-docs \
@@ -66,8 +66,8 @@ RUN make install
 # ## Build the compiler
 # RUN python ./x.py build
 # RUN python ./x.py install
-RUN $HOME/.cargo/bin/rustup toolchain link xtensa ${RUST_BUILD}
-RUN $HOME/.cargo/bin/rustup run xtensa rustc --print target-list | grep xtensa
+RUN /usr/local/bin/rustup toolchain link xtensa ${RUST_BUILD}
+RUN /usr/local/bin/rustup run xtensa rustc --print target-list | grep xtensa
 
 # Setup ESP-IDF & esptool
 ENV ESP32_IDF /xtensa-esp32-elf
@@ -81,7 +81,7 @@ RUN pip3 install esptool
 	
 ## Setup Xargo
 RUN /usr/local/bin/cargo install xargo
-# ENV XARGO_RUST_SRC ${BUILD_ROOT}/rust-xtensa/src
+ENV XARGO_RUST_SRC ${BUILD_ROOT}/rust-xtensa/src
 ENV RUSTC /usr/local/bin/rustc
 
 ## Setup path
