@@ -1,0 +1,119 @@
+ARG WGET_ARGS="--random-wait \
+               --retry-connrefused \
+               --retry-on-host-error \
+               --retry-on-http-error=400,403,404,408,429,500,503,504 \
+               -O- \
+              "
+ARG ESP32_IDF=/usr/local/share/xtensa-esp32-elf \
+    ESP8266_IDF=/usr/local/share/xtensa-lx106-elf \
+    CARGO_HOME=/usr/local \
+    CC=clang \
+    CXX=clang++ \
+    RUSTUP_HOME=/usr/local
+
+
+###############################################################################
+# https://hub.docker.com/_/debian?tab=tags&page=1&name=buster-slim&ordering=last_updated
+FROM debian:buster-slim AS base
+ARG  DEBIAN_FRONTEND=noninteractive
+COPY etc/ /etc/
+RUN  apt update -y \
+     && apt upgrade -y \
+     && apt install -y  $(cat /etc/apt/install)
+
+
+###############################################################################
+# http://quickhack.net/nom/blog/2019-05-14-build-rust-environment-for-esp32.html
+FROM    base AS build-llvm
+WORKDIR /tmp/build_root/llvm_build
+RUN     git clone --depth=1 https://github.com/espressif/llvm-project.git  \
+                  /tmp/build_root/llvm_project \
+        &&  cmake ../llvm_project/llvm \
+                  -DCMAKE_BUILD_TYPE=Release \
+                  -DCMAKE_INSTALL_PREFIX=/usr/local \
+                  -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="Xtensa" \
+                  -DLLVM_INSTALL_UTILS=ON \
+                  -DLLVM_TARGETS_TO_BUILD="X86" \
+                  -DLLVM_USE_RELATIVE_PATHS_IN_FILES=ON \
+                  -DLLVM_USE_RELATIVE_PATHS_IN_DEBUG_INFO=ON \
+                  -G "Unix Makefiles" \
+        &&  cmake --build . -- --jobs=$(nproc) \
+        &&  cmake --build . --target install
+
+
+###############################################################################
+# https://rustc-dev-guide.rust-lang.org/building/how-to-build-and-run.html
+FROM    base as build-xtensa
+COPY    --from=build-llvm /usr/local/ /usr/local/
+# https://rustup.rs/
+RUN     curl   --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | bash -s --   --default-toolchain nightly \
+                       --profile default \
+                       -y \
+                       --no-modify-path
+WORKDIR /tmp/build_root/rust_xtensa
+                      #  --disable-rpath \ # default?
+                      #  --docdir="/tmp/build_root/rust_docs" \
+RUN     git clone --depth=1 https://github.com/MabezDev/rust-xtensa.git . \
+        && ./configure --enable-parallel-compiler \
+                       --enable-extended \
+                       --disable-docs \
+                       --disable-compiler-docs \
+                       --disable-ninja \
+                       --disable-optimize-tests \
+                       --disable-codegen-tests \
+                       --disable-verbose-tests \
+                       --llvm-root="/usr/local" \
+                       --prefix="/usr/local/toolchains/xtensa" \
+        && make rustc-stage2 --jobs=$(nproc) \
+        && make install
+# xtensa toolchain
+RUN     rustup run xtensa rustc --print target-list | grep xtensa
+
+
+###############################################################################
+# https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/linux-setup.html
+FROM    base AS install-esp-idf
+COPY    --from=build-xtensa /usr/local/ /usr/local/
+WORKDIR /usr/local/share
+RUN     wget https://dl.espressif.com/dl/xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.tar.gz \
+             $WGET_ARGS \
+        | tar --extract --gunzip \
+        && wget https://dl.espressif.com/dl/xtensa-lx106-elf-linux64-1.22.0-100-ge567ec7-5.2.0.tar.gz \
+                $WGET_ARGS \
+        | tar --extract --gunzip
+# Use clang instead of gcc
+RUN     update-alternatives --install \
+                            /usr/local/bin/x86_64-linux-gnu-gcc \
+                            x86_64-linux-gnu-gcc \
+                            /usr/bin/clang 1 \
+        && pip3  install esptool
+
+###############################################################################
+# http://www.dest-unreach.org/socat/
+FROM    base AS install-socat
+COPY    --from=install-esp-idf /usr/local/ /usr/local/
+WORKDIR /tmp/build_root/
+RUN     wget http://www.dest-unreach.org/socat/download/socat-1.7.4.1.tar.gz \
+             $WGET_ARGS \
+        | tar  --extract --gunzip
+WORKDIR /tmp/build_root/socat-1.7.4.1
+RUN     ./configure && make --jobs=$(nproc) && make install
+
+
+###############################################################################
+FROM    base
+COPY    --from=install-socat /usr/local/ /usr/local/
+ENV     PATH=${ESP32_IDF}/bin:${ESP8266_IDF}/bin:$PATH
+RUN     rm -f /root/.bashrc /home/*/.basrc /etc/skel/.bashrc \ # Use /etc/bash.bashrc \
+        && find /usr/local/ \
+                -regex '.*bash_completion\.d\/.*' \
+                -exec ln --symbolic --force {} /etc/bash_completion.d/ \; \
+        # && rustup default xtensa \
+        && for _f in espefuse espsecure esptool; \
+           do update-alternatives --install \
+                                  /usr/local/bin/$_f \
+                                  $_f /usr/local/bin/$_f.py 1 ; \
+           done
+WORKDIR /app
+CMD     [ "cargo", "build", "--release" ]
